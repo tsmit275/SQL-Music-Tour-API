@@ -12,6 +12,6 @@ const Band = sequelize.define('Band', {
         allowNull: false
     },
     // Add other fields as necessary
-});
+})
 
-module.exports = Band;
+module.exports = Band

@@ -1,75 +1,39 @@
-// controllers/eventController.js
-const express = require('express')
-const router = express.Router()
-const { Event } = require('../models')
+const { Event, Stage, SetTime, MeetAndGreet } = require('../models')
 
-// Index route - get all events ordered by date
-router.get('/', async (req, res) => {
+const getEventSchedule = async (req, res) => {
     try {
-        const events = await Event.findAll({
+        const eventName = req.params.name
+        const event = await Event.findOne({
+            where: { name: eventName },
+            include: [
+                {
+                    model: Stage,
+                    as: 'stages',
+                    include: {
+                        model: SetTime,
+                        as: 'set_times',
+                        attributes: { exclude: ['event_id', 'stage_id'] },
+                        order: [['start_time', 'ASC']]
+                    }
+                },
+                {
+                    model: MeetAndGreet,
+                    as: 'meet_and_greets',
+                    attributes: { exclude: ['event_id'] },
+                    order: [['start_time', 'ASC']]
+                }
+            ],
             order: [['date', 'ASC']]
-        })
-        res.status(200).json(events)
-    } catch (error) {
-        res.status(500).json({ error: error.message })
-    }
-})
+        });
 
-// Show route - get a single event by ID
-router.get('/:id', async (req, res) => {
-    try {
-        const event = await Event.findByPk(req.params.id)
-        if (event) {
-            res.status(200).json(event)
-        } else {
-            res.status(404).json({ message: 'Event not found' })
+        if (!event) {
+            return res.status(404).json({ error: 'Event not found' })
         }
+
+        res.status(200).json(event)
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
-})
+}
 
-// Create route - create a new event
-router.post('/', async (req, res) => {
-    try {
-        const newEvent = await Event.create(req.body)
-        res.status(201).json(newEvent)
-    } catch (error) {
-        res.status(500).json({ error: error.message })
-    }
-})
-
-// Update route - update an existing event
-router.put('/:id', async (req, res) => {
-    try {
-        const [updated] = await Event.update(req.body, {
-            where: { id: req.params.id }
-        })
-        if (updated) {
-            const updatedEvent = await Event.findByPk(req.params.id)
-            res.status(200).json(updatedEvent)
-        } else {
-            res.status(404).json({ message: 'Event not found' })
-        }
-    } catch (error) {
-        res.status(500).json({ error: error.message })
-    }
-})
-
-// Delete route - delete an event
-router.delete('/:id', async (req, res) => {
-    try {
-        const deleted = await Event.destroy({
-            where: { id: req.params.id }
-        })
-        if (deleted) {
-            res.status(204).json()
-        } else {
-            res.status(404).json({ message: 'Event not found' })
-        }
-    } catch (error) {
-        res.status(500).json({ error: error.message })
-    }
-})
-
-module.exports = router
+module.exports = { getEventSchedule }
