@@ -1,20 +1,20 @@
-// DEPENDENCIES
 const express = require('express')
 const app = express()
+const bodyParser = require('body-parser')
 
-// CONFIGURATION / MIDDLEWARE
-require('dotenv').config()
-app.use(express.json())
-app.use(express.urlencoded({ extended: false }))
+// Require controllers
+const eventController = require('./controllers/eventController')
+const stageController = require('./controllers/stageController')
 
-// ROOT
-app.get('/', (req, res) => {
-    res.status(200).json({
-        message: 'Welcome to the Tour API'
-    })
-})
+// Middleware
+app.use(bodyParser.json())
 
-// LISTEN
-app.listen(process.env.PORT, () => {
-    console.log(`🎸 Rockin' on port: ${process.env.PORT}`)
+// Use controllers
+app.use('/events', eventController)
+app.use('/stages', stageController)
+
+// Start the server
+const PORT = process.env.PORT || 3000
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`)
 })
